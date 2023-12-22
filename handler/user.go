@@ -30,6 +30,18 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
+	var inputEmail user.CheckEmailInput
+	inputEmail.Email = input.Email
+
+	isEmailAvailable, err := h.userService.IsEmailAvailable(inputEmail)
+	if err != nil || isEmailAvailable == false {
+		errorMessage := gin.H{"errors": "Server error"}
+
+		response := helper.APIResponse("Email already exist", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
 	newUser, err := h.userService.RegisterUser(input)
 	if err != nil {
 		response := helper.APIResponse("Register failed", http.StatusBadRequest, "error", nil)
