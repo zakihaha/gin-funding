@@ -19,6 +19,7 @@ func NewUserHandler(userService user.Service) *userHandler {
 func (h *userHandler) RegisterUser(c *gin.Context) {
 	var input user.RegisterUserInput
 
+	// mapping request body ke variable input
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		errors := helper.FormatValidationError(err)

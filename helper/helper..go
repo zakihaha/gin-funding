@@ -31,6 +31,7 @@ func APIResponse(Message string, Code int, Status string, data interface{}) Resp
 func FormatValidationError(err error) []string {
 	var errors []string
 
+	// assertion memastikan tipe err adalah validator.ValidationErrors
 	for _, e := range err.(validator.ValidationErrors) {
 		errors = append(errors, e.Error())
 	}
