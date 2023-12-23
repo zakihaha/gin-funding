@@ -5,11 +5,17 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/zakihaha/gin-funding/auth"
 	"github.com/zakihaha/gin-funding/handler"
+	"github.com/zakihaha/gin-funding/helper"
 	"github.com/zakihaha/gin-funding/user"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
+
+func init() {
+	helper.LoadEnvVariables()
+}
 
 func main() {
 	dsn := "root:@tcp(127.0.0.1:3306)/gin_funding?charset=utf8mb4&parseTime=True&loc=Local"
@@ -22,8 +28,9 @@ func main() {
 
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
+	authService := auth.NewService()
 
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(userService, authService)
 
 	router := gin.Default()
 	api := router.Group("/api/v1")

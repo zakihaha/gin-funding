@@ -4,16 +4,24 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/zakihaha/gin-funding/auth"
 	"github.com/zakihaha/gin-funding/helper"
 	"github.com/zakihaha/gin-funding/user"
 )
 
 type userHandler struct {
 	userService user.Service
+	authService auth.Service
 }
 
-func NewUserHandler(userService user.Service) *userHandler {
-	return &userHandler{userService}
+func NewUserHandler(
+	userService user.Service,
+	authService auth.Service,
+) *userHandler {
+	return &userHandler{
+		userService,
+		authService,
+	}
 }
 
 func (h *userHandler) RegisterUser(c *gin.Context) {
@@ -49,9 +57,16 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// jwt
+	token, err := h.authService.GenerateToken(int(newUser.ID))
+	if err != nil {
+		errorMessage := gin.H{"errors": err.Error()}
+		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
 
-	formatter := user.FormatUser(newUser, "token")
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	formatter := user.FormatUser(newUser, token)
 
 	response := helper.APIResponse("Account has been registered", http.StatusCreated, "success", formatter)
 
@@ -80,7 +95,16 @@ func (h *userHandler) Login(c *gin.Context) {
 		return
 	}
 
-	formatter := user.FormatUser(loggedInUser, "token")
+	token, err := h.authService.GenerateToken(int(loggedInUser.ID))
+	if err != nil {
+		errorMessage := gin.H{"errors": err.Error()}
+		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
+
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	formatter := user.FormatUser(loggedInUser, token)
 
 	response := helper.APIResponse("Successfuly loggedin", http.StatusOK, "success", formatter)
 
