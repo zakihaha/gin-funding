@@ -47,7 +47,7 @@ func main() {
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", middleware.AuthMiddleware(authService, userService), userHandler.UploadAvatar)
 
-	api.GET("/campaigns", campaignHandler.GetAll)
+	api.GET("/campaigns", campaignHandler.GetCampaigns)
 
 	router.Run(os.Getenv("PORT"))
 }

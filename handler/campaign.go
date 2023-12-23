@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/zakihaha/gin-funding/campaign"
@@ -20,8 +21,10 @@ func NewCampaignHandler(
 	}
 }
 
-func (h *campaignHandler) GetAll(c *gin.Context) {
-	campaigns, err := h.campaignService.GetAll()
+func (h *campaignHandler) GetCampaigns(c *gin.Context) {
+	userID, _ := strconv.Atoi(c.Query("user_id"))
+
+	campaigns, err := h.campaignService.GetCampaigns(userID)
 	if err != nil {
 		errorMessage := gin.H{"errors": err.Error()}
 
