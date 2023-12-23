@@ -7,6 +7,8 @@ type Repository interface {
 	// Tipe data lain yang mengimplementasikan metode Save dengan parameter dan tipe pengembalian yang sama dapat dianggap sebagai tipe Repository
 	Save(user User) (User, error)
 	FindByEmail(email string) (User, error)
+	FindById(ID int) (User, error)
+	Update(user User) (User, error)
 }
 
 // Pekerja yang menandatangani kontrak dan menunjukkan bahwa mereka bisa bahasa Go dengan menyediakan implementasi untuk metode Save.
@@ -35,6 +37,25 @@ func (r *repository) Save(user User) (User, error) {
 func (r *repository) FindByEmail(email string) (User, error) {
 	var user User
 	err := r.db.Where("email = ?", email).Find(&user).Error
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (r *repository) FindById(ID int) (User, error) {
+	var user User
+	err := r.db.Where("id = ?", ID).Find(&user).Error
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (r *repository) Update(user User) (User, error) {
+	err := r.db.Save(&user).Error
 	if err != nil {
 		return user, err
 	}
