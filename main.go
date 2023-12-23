@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/zakihaha/gin-funding/auth"
 	"github.com/zakihaha/gin-funding/handler"
 	"github.com/zakihaha/gin-funding/helper"
+	"github.com/zakihaha/gin-funding/middleware"
 	"github.com/zakihaha/gin-funding/user"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -38,7 +40,7 @@ func main() {
 	api.POST("/register", userHandler.RegisterUser)
 	api.POST("/login", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
-	api.POST("/avatars", userHandler.UploadAvatar)
+	api.POST("/avatars", middleware.AuthMiddleware(authService, userService), userHandler.UploadAvatar)
 
-	router.Run("localhost:8080")
+	router.Run(os.Getenv("PORT"))
 }
