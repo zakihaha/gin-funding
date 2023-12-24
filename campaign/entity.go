@@ -1,6 +1,10 @@
 package campaign
 
-import "time"
+import (
+	"time"
+
+	"github.com/zakihaha/gin-funding/user"
+)
 
 type Campaign struct {
 	ID               int
@@ -17,6 +21,7 @@ type Campaign struct {
 	UpdatedAt        time.Time
 
 	CampaignImages []CampaignImage
+	User		   user.User
 }
 
 type CampaignImage struct {
