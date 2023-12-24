@@ -2,6 +2,7 @@ package helper
 
 import (
 	"log"
+	"math/rand"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
@@ -49,4 +50,16 @@ func LoadEnvVariables() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+}
+
+func GenerateRandomString(n int) string {
+	var letters = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	result := make([]byte, n)
+
+	for i := range result {
+		result[i] = letters[rand.Intn(len(letters))]
+	}
+
+	return string(result)
 }

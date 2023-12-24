@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/zakihaha/gin-funding/campaign"
 	"github.com/zakihaha/gin-funding/helper"
+	"github.com/zakihaha/gin-funding/user"
 )
 
 type campaignHandler struct {
@@ -63,5 +64,37 @@ func (h *campaignHandler) GetCampaign(c *gin.Context) {
 	formatter := campaign.FormatCampaignDetail(campaignDetail)
 
 	response := helper.APIResponse("Successfully to get detail campaign", http.StatusOK, "success", formatter)
+	c.JSON(http.StatusOK, response)
+}
+
+func (h *campaignHandler) CreateCampaign(c *gin.Context) {
+	var input campaign.CreateCampaignInput
+
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+		errorMessage := gin.H{"errors": errors}
+
+		response := helper.APIResponse("Failed to create campaign", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	currentUser := c.MustGet("currentUser").(user.User)
+
+	input.User = currentUser
+
+	newCampaign, err := h.campaignService.CreateCampaign(input)
+	if err != nil {
+		errorMessage := gin.H{"errors": err.Error()}
+
+		response := helper.APIResponse("Failed to create campaign", http.StatusBadRequest, "error", errorMessage)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	formatter := campaign.FormatCampaign(newCampaign)
+
+	response := helper.APIResponse("Successfully to create campaign", http.StatusOK, "success", formatter)
 	c.JSON(http.StatusOK, response)
 }
