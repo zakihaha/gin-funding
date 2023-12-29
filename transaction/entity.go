@@ -3,6 +3,7 @@ package transaction
 import (
 	"time"
 
+	"github.com/zakihaha/gin-funding/campaign"
 	"github.com/zakihaha/gin-funding/user"
 )
 
@@ -16,6 +17,6 @@ type Transaction struct {
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 
-	// Campaign Campaign
-	User user.User
+	User     user.User
+	Campaign campaign.Campaign
 }
