@@ -2,13 +2,21 @@ package transaction
 
 import (
 	"errors"
+	"fmt"
+	"os"
+	"strconv"
 
+	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/snap"
 	"github.com/zakihaha/gin-funding/campaign"
+	"github.com/zakihaha/gin-funding/user"
 )
 
 type Service interface {
 	GetTransactionsByCampaignID(input GetTransactionsByCampaignIDInput) ([]Transaction, error)
 	GetTransactionsByUserID(userID int) ([]Transaction, error)
+	CreateTransaction(input CreateTransactionInput) (Transaction, error)
+	GetPaymentURL(transaction Transaction, user user.User) (string, error)
 }
 
 type service struct {
@@ -48,4 +56,61 @@ func (s *service) GetTransactionsByUserID(userID int) ([]Transaction, error) {
 	}
 
 	return transactions, nil
+}
+
+func (s *service) CreateTransaction(input CreateTransactionInput) (Transaction, error) {
+	transaction := Transaction{}
+	transaction.Amount = input.Amount
+	transaction.CampaignID = input.CampaignID
+	transaction.UserID = int(input.User.ID)
+	transaction.Status = "pending"
+
+	newTransaction, err := s.repository.Save(transaction)
+	if err != nil {
+		return newTransaction, err
+	}
+
+	paymentURL, err := s.GetPaymentURL(newTransaction, input.User)
+	if err != nil {
+		return newTransaction, err
+	}
+
+	newTransaction.PaymentURL = paymentURL
+
+	newTransaction, err = s.repository.Update(newTransaction)
+	if err != nil {
+		return newTransaction, err
+	}
+
+	return newTransaction, nil
+}
+
+func (s *service) GetPaymentURL(transaction Transaction, user user.User) (string, error) {
+	// 1. Set you ServerKey with globally
+	midtrans.ServerKey = os.Getenv("MIDTRANS_SERVER_KEY")
+	fmt.Println("Server Key :", midtrans.ServerKey)
+	midtrans.Environment = midtrans.Sandbox
+
+	// 2. Initiate Snap request
+	req := &snap.Request{
+		CustomerDetail: &midtrans.CustomerDetails{
+			Email: user.Email,
+			FName: user.Name,
+		},
+		TransactionDetails: midtrans.TransactionDetails{
+			OrderID:  strconv.Itoa(transaction.ID),
+			GrossAmt: int64(transaction.Amount),
+		},
+	}
+
+	// 3. Request create Snap transaction to Midtrans
+	snapResp, err := snap.CreateTransaction(req)
+	if err != nil {
+		fmt.Println("Error :", err.GetMessage())
+		return "", err
+	}
+
+	fmt.Println("Response :", snapResp)
+
+	return snapResp.RedirectURL, nil
 }
