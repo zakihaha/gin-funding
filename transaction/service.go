@@ -17,6 +17,7 @@ type Service interface {
 	GetTransactionsByUserID(userID int) ([]Transaction, error)
 	CreateTransaction(input CreateTransactionInput) (Transaction, error)
 	GetPaymentURL(transaction Transaction, user user.User) (string, error)
+	Webhook(input TransactionNotificationInput) error
 }
 
 type service struct {
@@ -113,4 +114,46 @@ func (s *service) GetPaymentURL(transaction Transaction, user user.User) (string
 	fmt.Println("Response :", snapResp)
 
 	return snapResp.RedirectURL, nil
+}
+
+func (s *service) Webhook(input TransactionNotificationInput) error {
+	transaction_id, err := strconv.Atoi(input.OrderID)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := s.repository.GetByID(transaction_id)
+	if err != nil {
+		return err
+	}
+
+	if input.PaymentType == "credit_card" && input.TransactionStatus == "capture" && input.FraudStatus == "accept" {
+		transaction.Status = "paid"
+	} else if input.TransactionStatus == "settlement" {
+		transaction.Status = "paid"
+	} else if input.TransactionStatus == "deny" || input.TransactionStatus == "expire" || input.TransactionStatus == "cancel" {
+		transaction.Status = "cancelled"
+	}
+
+	updatedTransaction, err := s.repository.Update(transaction)
+	if err != nil {
+		return err
+	}
+
+	campaign, err := s.campaignRepository.FindByID(updatedTransaction.CampaignID)
+	if err != nil {
+		return err
+	}
+
+	if updatedTransaction.Status == "paid" {
+		campaign.BackerCount += 1
+		campaign.CurrentAmount += updatedTransaction.Amount
+
+		_, err := s.campaignRepository.Update(campaign)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

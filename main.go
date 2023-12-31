@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/zakihaha/gin-funding/auth"
 	"github.com/zakihaha/gin-funding/campaign"
@@ -44,6 +45,7 @@ func main() {
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	router := gin.Default()
+	router.Use(cors.Default())
 	router.Static("/images", "./public/images")
 	api := router.Group("/api/v1")
 
@@ -62,6 +64,7 @@ func main() {
 
 	api.GET("/transactions", middleware.AuthMiddleware(authService, userService), transactionHandler.GetTransactionsByUserID)
 	api.POST("/transactions", middleware.AuthMiddleware(authService, userService), transactionHandler.CreateTransaction)
+	api.POST("/transactions/webhook", transactionHandler.GetNotification)
 
 	router.Run(os.Getenv("PORT"))
 }

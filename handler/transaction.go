@@ -101,3 +101,28 @@ func (h *transactionHandler) CreateTransaction(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, response)
 }
+
+func (h *transactionHandler) GetNotification(c *gin.Context) {
+	var input transaction.TransactionNotificationInput
+
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+		data := gin.H{"errors": errors}
+
+		response := helper.APIResponse("Failed to get notification", http.StatusBadRequest, "error", data)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	err = h.transactionService.Webhook(input)
+	if err != nil {
+		data := gin.H{"errors": err.Error()}
+
+		response := helper.APIResponse("Failed to process payment", http.StatusBadRequest, "error", data)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	c.JSON(http.StatusOK, input)
+}
