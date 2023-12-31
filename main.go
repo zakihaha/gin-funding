@@ -51,6 +51,7 @@ func main() {
 
 	api.POST("/register", userHandler.RegisterUser)
 	api.POST("/login", userHandler.Login)
+	api.GET("/me", middleware.AuthMiddleware(authService, userService), userHandler.Me)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", middleware.AuthMiddleware(authService, userService), userHandler.UploadAvatar)
 

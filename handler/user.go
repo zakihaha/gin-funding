@@ -185,3 +185,21 @@ func (h *userHandler) UploadAvatar(c *gin.Context) {
 	response := helper.APIResponse("Avatar successfuly uploaded", http.StatusOK, "success", data)
 	c.JSON(http.StatusOK, response)
 }
+
+func (h *userHandler) Me(c *gin.Context) {
+	currentUser := c.MustGet("currentUser").(user.User)
+
+	loggedUser, err := h.userService.GetUserByID(int(currentUser.ID))
+	if err != nil {
+		data := gin.H{"errors": err.Error()}
+
+		response := helper.APIResponse("Failted to get user loggedin", http.StatusBadRequest, "error", data)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	formatter := user.FormatUser(loggedUser, "")
+
+	response := helper.APIResponse("Successfully to get logged user", http.StatusOK, "success", formatter)
+	c.JSON(http.StatusOK, response)
+}
